@@ -50,17 +50,29 @@ export const StudentLedger = () => {
     const totalDiscount = studentPayments.reduce((acc, p) => acc + (p.discount || 0), 0);
     const totalPenalty = studentPayments.reduce((acc, p) => acc + (p.penalty || 0), 0);
     
-    let nonCourseFeesDebit = 0;
+    const getNormalizeKey = (type: string) => {
+      if (!type) return 'Course Fee';
+      const t = type.trim().toLowerCase();
+      if (t === 'course fee' || t === 'coursefee' || t === 'full course fee') return 'Course Fee';
+      if (t === 'admission fee') return 'Admission Fee';
+      if (t === 'registration fee') return 'Registration Fee';
+      if (t === 'exam fee') return 'Exam Fee';
+      return type.trim();
+    };
+
+    const maxBilledHeads: { [type: string]: number } = {};
     studentPayments.forEach(p => {
       const headsList = p.heads || [{ type: p.feeType, amount: p.amount, discount: p.discount, penalty: p.penalty }];
       headsList.forEach(h => {
-        if (h.type !== 'Course Fee') {
-          nonCourseFeesDebit += (h.amount || 0);
-        }
+        const typeNorm = getNormalizeKey(h.type);
+        maxBilledHeads[typeNorm] = Math.max(maxBilledHeads[typeNorm] || 0, h.amount || 0);
       });
     });
 
-    const totalDebit = (student.totalFees || 0) + totalPenalty + nonCourseFeesDebit;
+    const sumOfMaxHeads = Object.values(maxBilledHeads).reduce((acc, amt) => acc + amt, 0);
+    const baseAcademicCharge = Math.max(student.totalFees || 0, sumOfMaxHeads);
+
+    const totalDebit = baseAcademicCharge + totalPenalty;
     const totalCredit = totalPaid + totalDiscount;
     const balance = Math.max(0, totalDebit - totalCredit);
 
@@ -71,28 +83,12 @@ export const StudentLedger = () => {
     rawTx.push({
       id: `debit-${student.id}`,
       date: student.admissionDate || new Date().toISOString().split('T')[0],
-      description: `Course Admission: ${student.course}`,
+      description: `Academic Package Fees: ${student.course}`,
       type: 'DEBIT',
-      amount: student.totalFees || 0,
+      amount: baseAcademicCharge,
     });
 
-    // 2. Add non-Course Fee debits
-    studentPayments.forEach(p => {
-      const headsList = p.heads || [{ type: p.feeType, amount: p.amount, discount: p.discount, penalty: p.penalty }];
-      headsList.forEach((h, hIdx) => {
-        if (h.type !== 'Course Fee') {
-          rawTx.push({
-            id: `${p.id}-debit-${hIdx}`,
-            date: p.date,
-            description: `Fee Charged: ${h.type}`,
-            type: 'DEBIT',
-            amount: h.amount || 0
-          });
-        }
-      });
-    });
-
-    // 3. Add penalty charges, discount allowances, and paid receipts dynamically
+    // 2. Add penalty charges, discount allowances, and paid receipts dynamically
     studentPayments.forEach(p => {
       if (p.penalty && p.penalty > 0) {
         rawTx.push({

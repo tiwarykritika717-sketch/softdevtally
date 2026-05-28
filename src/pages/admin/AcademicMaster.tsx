@@ -101,6 +101,7 @@ const SessionManager = ({ isViewOnly }: { isViewOnly: boolean }) => {
   const { sessions, addSession, updateSession, deleteSession } = useApp();
   const [showModal, setShowModal] = useState(false);
   const [editingSession, setEditingSession] = useState<AcademicSession | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     startDate: '',
@@ -110,6 +111,7 @@ const SessionManager = ({ isViewOnly }: { isViewOnly: boolean }) => {
   });
 
   const handleOpen = (session?: AcademicSession) => {
+    setError(null);
     if (session) {
       setEditingSession(session);
       setFormData({
@@ -134,12 +136,34 @@ const SessionManager = ({ isViewOnly }: { isViewOnly: boolean }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    const nameTrimmed = formData.name.trim();
+    if (!nameTrimmed) {
+      setError("Session name cannot be empty");
+      return;
+    }
+
+    // Check for duplicate session name (case insensitive, trimmed)
+    const isDuplicate = (sessions || []).some(s => 
+      s.name.trim().toLowerCase() === nameTrimmed.toLowerCase() && 
+      (!editingSession || s.id !== editingSession.id)
+    );
+
+    if (isDuplicate) {
+      setError(`Session "${nameTrimmed}" already exists.`);
+      return;
+    }
+
     if (editingSession) {
-      updateSession(editingSession.id, formData);
+      updateSession(editingSession.id, {
+        ...formData,
+        name: nameTrimmed
+      });
     } else {
       const newSession: AcademicSession = {
         id: Math.random().toString(36).substr(2, 9),
-        ...formData
+        ...formData,
+        name: nameTrimmed
       };
       addSession(newSession);
     }
@@ -232,9 +256,17 @@ const SessionManager = ({ isViewOnly }: { isViewOnly: boolean }) => {
                     required 
                     placeholder="e.g. 2024-25"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, name: e.target.value });
+                      setError(null);
+                    }}
                     className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-[#141414] font-bold text-sm" 
                   />
+                  {error && (
+                    <p className="text-[11px] text-red-500 font-bold mt-1 pl-1">
+                      {error}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

@@ -25,145 +25,15 @@ import { Student, FeePayment, FeeHeadDetail, PaymentModeDetail } from '../../typ
 
 const getClubbedFeePayments = (payments: FeePayment[]): FeePayment[] => {
   if (!payments || payments.length === 0) return [];
-  
-  // Group by studentId and date
-  const groups: { [key: string]: FeePayment[] } = {};
-  payments.forEach(p => {
-    const key = `${p.studentId}_${p.date}`;
-    if (!groups[key]) {
-      groups[key] = [];
-    }
-    groups[key].push(p);
+  return [...payments].sort((a, b) => {
+    const timeA = new Date(a.date).getTime();
+    const timeB = new Date(b.date).getTime();
+    if (timeA !== timeB) return timeA - timeB;
+    const timeA2 = (a as any).created_at ? new Date((a as any).created_at).getTime() : 0;
+    const timeB2 = (b as any).created_at ? new Date((b as any).created_at).getTime() : 0;
+    if (timeA2 !== timeB2) return timeA2 - timeB2;
+    return a.id.localeCompare(b.id);
   });
-
-  const clubbed: FeePayment[] = [];
-  
-  Object.values(groups).forEach(group => {
-    if (group.length === 1) {
-      clubbed.push(group[0]);
-      return;
-    }
-    
-    // Sort group chronologically (oldest first) to accurately trace balance decrement
-    const sortedGroup = [...group].sort((a, b) => {
-       if ((a as any).created_at && (b as any).created_at) {
-         return new Date((a as any).created_at).getTime() - new Date((b as any).created_at).getTime();
-       }
-       if (a.collectionTime && b.collectionTime) {
-         return a.collectionTime.localeCompare(b.collectionTime);
-       }
-       if (a.receiptNo && b.receiptNo) {
-         return a.receiptNo.localeCompare(b.receiptNo);
-       }
-       return a.id.localeCompare(b.id);
-    });
-    const first = sortedGroup[0];
-    const last = sortedGroup[sortedGroup.length - 1];
-    
-    // Merge receipt numbers
-    const uniqueReceipts = Array.from(new Set(sortedGroup.map(g => g.receiptNo).filter(Boolean)));
-    const receiptNo = uniqueReceipts.join(' + ');
-    
-    // Merge fee types
-    const uniqueFeeTypes = Array.from(new Set(sortedGroup.map(g => g.feeType).filter(Boolean)));
-    const feeType = uniqueFeeTypes.join(', ');
-    
-    // Merge heads
-    const allHeads: FeeHeadDetail[] = [];
-    sortedGroup.forEach(p => {
-      if (p.heads && p.heads.length > 0) {
-        allHeads.push(...p.heads);
-      } else {
-        allHeads.push({
-          type: p.feeType,
-          amount: p.amount || 0,
-          discount: p.discount || 0,
-          penalty: p.penalty || 0,
-          dueDate: p.dueDate,
-          penaltyRate: p.penaltyRate
-        });
-      }
-    });
-
-    // Merge heads and de-duplicate by type, summing the amounts, discounts, and penalties of the same head types when clubbed
-    const mergedHeadsMap: { [type: string]: FeeHeadDetail } = {};
-    allHeads.forEach(h => {
-      if (!mergedHeadsMap[h.type]) {
-        mergedHeadsMap[h.type] = { ...h };
-      } else {
-        mergedHeadsMap[h.type].amount += h.amount;
-        mergedHeadsMap[h.type].discount += h.discount;
-        mergedHeadsMap[h.type].penalty += h.penalty;
-      }
-    });
-    const mergedHeads = Object.values(mergedHeadsMap);
-
-    // Merge payment modes
-    const allPaymentModes: PaymentModeDetail[] = [];
-    sortedGroup.forEach(p => {
-      if (p.paymentModes && p.paymentModes.length > 0) {
-        allPaymentModes.push(...p.paymentModes);
-      } else {
-        allPaymentModes.push({
-          mode: p.paymentMode || 'Cash',
-          amount: p.paidAmount || 0,
-          transactionId: p.transactionId || ''
-        });
-      }
-    });
-    
-    // De-duplicate paymentModes by mode name
-    const mergedModesMap: { [mode: string]: PaymentModeDetail } = {};
-    allPaymentModes.forEach(m => {
-      if (!mergedModesMap[m.mode]) {
-        mergedModesMap[m.mode] = { ...m };
-      } else {
-        mergedModesMap[m.mode].amount += m.amount;
-        if (m.transactionId && !mergedModesMap[m.mode].transactionId?.includes(m.transactionId)) {
-          mergedModesMap[m.mode].transactionId = mergedModesMap[m.mode].transactionId 
-            ? `${mergedModesMap[m.mode].transactionId}, ${m.transactionId}`
-            : m.transactionId;
-        }
-      }
-    });
-    const mergedPaymentModes = Object.values(mergedModesMap);
-    const paymentMode = mergedPaymentModes.map(m => m.mode).join(' + ');
-    
-    const amount = mergedHeads.reduce((sum, h) => sum + h.amount, 0);
-    const discount = mergedHeads.reduce((sum, h) => sum + h.discount, 0);
-    const penalty = mergedHeads.reduce((sum, h) => sum + h.penalty, 0);
-    const paidAmount = sortedGroup.reduce((sum, p) => sum + (p.paidAmount || 0), 0);
-    
-    const balance = last.balance;
-    const finalStatus = balance <= 0 ? 'Paid' : (paidAmount > 0 ? 'Partial' : 'Pending');
-    
-    const uniqueRemarks = Array.from(new Set(sortedGroup.map(g => g.remarks).filter(Boolean)));
-    const remarks = uniqueRemarks.join(' | ');
-    const collectionTime = first.collectionTime || '';
-
-    clubbed.push({
-      id: first.id,
-      studentId: first.studentId,
-      receiptNo,
-      date: first.date,
-      collectionTime,
-      feeType,
-      heads: mergedHeads,
-      amount,
-      discount,
-      penalty,
-      paidAmount,
-      balance,
-      paymentMode,
-      paymentModes: mergedPaymentModes,
-      status: finalStatus,
-      remarks,
-      dueDate: last.dueDate || first.dueDate,
-      penaltyRate: last.penaltyRate || first.penaltyRate
-    } as FeePayment);
-  });
-  
-  return clubbed;
 };
 
 export const FeeCollection = () => {
@@ -433,15 +303,21 @@ export const FeeCollection = () => {
     window.open(`https://wa.me/91${student.contact.replace(/\D/g, '')}?text=${encodedMessage}`, '_blank');
   };
 
-  const getInstallmentNumber = (currentDate: string, studentId: string) => {
-    const studentPayments = (clubbedFeePayments || [])
+  const getInstallmentNumber = (paymentId: string, studentId: string) => {
+    const studentPayments = (feePayments || [])
       .filter(p => p.studentId === studentId)
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      .sort((a, b) => {
+        const timeA = new Date(a.date).getTime();
+        const timeB = new Date(b.date).getTime();
+        if (timeA !== timeB) return timeA - timeB;
+        const timeA2 = (a as any).created_at ? new Date((a as any).created_at).getTime() : 0;
+        const timeB2 = (b as any).created_at ? new Date((b as any).created_at).getTime() : 0;
+        if (timeA2 !== timeB2) return timeA2 - timeB2;
+        return a.id.localeCompare(b.id);
+      });
     
-    const uniqueDates = Array.from(new Set(studentPayments.map(p => p.date)));
-    const dateIndex = uniqueDates.indexOf(currentDate);
-    
-    return dateIndex !== -1 ? `Installment ${dateIndex + 1}` : 'N/A';
+    const paymentIndex = studentPayments.findIndex(p => p.id === paymentId);
+    return paymentIndex !== -1 ? `Installment ${paymentIndex + 1}` : 'N/A';
   };
 
   return (
@@ -757,7 +633,7 @@ export const FeeCollection = () => {
                           </div>
                         </td>
                         <td className="px-8 py-6">
-                          <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{getInstallmentNumber(payment.date, payment.studentId)}</span>
+                          <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{getInstallmentNumber(payment.id, payment.studentId)}</span>
                         </td>
                         <td className="px-8 py-6 font-bold text-[10px] text-[#141414] uppercase tracking-tight">{student?.name || 'Unknown'}</td>
                         <td className="px-8 py-6 font-bold text-[10px] text-[#141414] uppercase tracking-tight">{student?.fatherName || '--'}</td>
@@ -1022,7 +898,7 @@ export const FeeCollection = () => {
 
                       return filteredPayments.slice().reverse().map(payment => {
                         const student = (students || []).find(s => s.id === payment.studentId);
-                        const instStr = getInstallmentNumber(payment.date, payment.studentId);
+                        const instStr = getInstallmentNumber(payment.id, payment.studentId);
                         const instNumber = instStr.match(/\d+/) ? instStr.match(/\d+/)![0] : (instStr === 'N/A' || !instStr ? '--' : instStr);
 
                         return (
@@ -1756,7 +1632,7 @@ export const FeeCollection = () => {
                                   <div className="grid grid-cols-2 divide-x-2 divide-black h-10">
                                     <div className="px-4 flex items-center font-black bg-blue-50 text-blue-600 text-[10px]">INSTALLMENT</div>
                                     <div className="px-4 flex items-center font-black uppercase text-blue-600 text-[10px]">
-                                      {getInstallmentNumber(showReceipt.date, showReceipt.studentId)}
+                                      {getInstallmentNumber(showReceipt.id, showReceipt.studentId)}
                                     </div>
                                  </div>
                                </div>
@@ -1791,7 +1667,7 @@ export const FeeCollection = () => {
                                    if (!student) return null;
                                    
                                    const studentPayments = clubbedFeePayments.filter(p => p.studentId === student.id);
-                                   const summary: Record<string, { amount: number, discount: number, penalty: number, paid: number }> = {};
+                                   // Dynamic summary computed below
                                    
                                    const getNormalizeKey = (type: string) => {
                                       if (!type) return 'Course Fee';
@@ -1803,34 +1679,47 @@ export const FeeCollection = () => {
                                       return type.trim();
                                     };
 
-                                    summary['Course Fee'] = {
-                                     amount: student.totalFees || 0,
-                                     discount: (student as any).discount || 0,
-                                     penalty: 0,
-                                     paid: 0
-                                   };
+                                    const maxHeads: Record<string, { amount: number, discount: number, penalty: number, paid: number }> = {};
+                                    
+                                    maxHeads['Course Fee'] = {
+                                      amount: student.totalFees || 0,
+                                      discount: (student as any).discount || 0,
+                                      penalty: 0,
+                                      paid: 0
+                                    };
 
-                                   studentPayments.forEach(p => {
-                                     const heads = p.heads || [{ type: p.feeType, amount: p.amount, discount: p.discount, penalty: p.penalty }];
-                                     heads.forEach(h => {
-                                       const hTypeNorm = getNormalizeKey(h.type); if (!summary[hTypeNorm]) {
-                                          summary[hTypeNorm] = { amount: h.amount, discount: h.discount || 0, penalty: h.penalty || 0, paid: 0 };
-                                       }
-                                     });
-                                   });
-
-                                   studentPayments.forEach(p => {
+                                    studentPayments.forEach(p => {
                                       const heads = p.heads || [{ type: p.feeType, amount: p.amount, discount: p.discount, penalty: p.penalty }];
                                       heads.forEach(h => {
-                                         const hTypeNorm = getNormalizeKey(h.type); if (summary[hTypeNorm]) {
-                                            summary[hTypeNorm].paid += p.paidAmount * (h.amount / (p.amount || 1));
-                                         }
+                                        const hTypeNorm = getNormalizeKey(h.type);
+                                        if (!maxHeads[hTypeNorm]) {
+                                          maxHeads[hTypeNorm] = {
+                                            amount: h.amount,
+                                            discount: h.discount || 0,
+                                            penalty: h.penalty || 0,
+                                            paid: 0
+                                          };
+                                        } else {
+                                          maxHeads[hTypeNorm].amount = Math.max(maxHeads[hTypeNorm].amount, h.amount);
+                                          maxHeads[hTypeNorm].discount = Math.max(maxHeads[hTypeNorm].discount, h.discount || 0);
+                                          maxHeads[hTypeNorm].penalty = Math.max(maxHeads[hTypeNorm].penalty, h.penalty || 0);
+                                        }
                                       });
-                                   });
+                                    });
 
-                                   return Object.entries(summary)
-                                     
-                                     .map(([type, data], idx) => {
+                                    studentPayments.forEach(p => {
+                                       const heads = p.heads || [{ type: p.feeType, amount: p.amount, discount: p.discount, penalty: p.penalty }];
+                                       heads.forEach(h => {
+                                          const hTypeNorm = getNormalizeKey(h.type);
+                                          if (maxHeads[hTypeNorm]) {
+                                             maxHeads[hTypeNorm].paid += p.paidAmount * (h.amount / (p.amount || 1));
+                                          }
+                                       });
+                                    });
+
+                                    const summary = maxHeads;
+
+                                    return Object.entries(summary).map(([type, data], idx) => {
                                      const balance = Math.max(0, (data.amount + data.penalty) - data.discount - data.paid);
                                      const status = balance <= 0 ? 'Paid' : (data.paid > 0 ? 'Partial' : 'Pending');
                                      
@@ -1970,7 +1859,7 @@ export const FeeCollection = () => {
                                         return modes.map((m, mIdx) => (
                                           <tr key={`${p.id}-${mIdx}`} className="divide-x-[1.5px] divide-black font-bold">
                                              <td className="py-2">{rowIdx++}</td>
-                                             <td className="py-2">{getInstallmentNumber(p.date, p.studentId)}</td>
+                                             <td className="py-2">{getInstallmentNumber(p.id, p.studentId)}</td>
                                              <td className="py-2">{p.receiptNo}</td>
                                              <td className="py-2 uppercase">{p.feeType}</td>
                                              <td className="py-2">₹{m.amount.toLocaleString()}</td>

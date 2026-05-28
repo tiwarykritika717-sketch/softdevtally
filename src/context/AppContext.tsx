@@ -1805,12 +1805,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         receipt_no: p.receiptNo,
         date: p.date,
         fee_type: p.feeType,
+        heads: p.heads || [],
         amount: p.amount,
         discount: p.discount,
         penalty: p.penalty,
         paid_amount: p.paidAmount,
         balance: p.balance,
         payment_mode: p.paymentMode,
+        transaction_id: p.transactionId || null,
         status: p.status,
         remarks: p.remarks || ''
       });
