@@ -124,37 +124,7 @@ export const FeeMaster = () => {
         </button>
       </div>
 
-      {/* Interactive Summary Boxes */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <motion.div whileHover={{ y: -5 }} className="bg-[#141414] p-8 rounded-[2.5rem] text-white relative overflow-hidden group shadow-2xl">
-           <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/5 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
-           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Fee Collection</p>
-           <h3 className="text-3xl font-black mb-4 tracking-tighter">₹4,28,400</h3>
-           <div className="flex items-center space-x-2 text-emerald-400">
-              <ArrowUpRight size={14} />
-              <span className="text-[10px] font-black uppercase tracking-widest">12.5% increase</span>
-           </div>
-        </motion.div>
-        
-        <motion.div whileHover={{ y: -5 }} className="bg-white p-8 rounded-[2.5rem] border border-[#F0F0F0] group shadow-sm hover:shadow-xl transition-all">
-           <p className="text-[10px] font-black text-[#888888] uppercase tracking-widest mb-1">Pending Fees</p>
-           <h3 className="text-3xl font-black mb-4 tracking-tighter text-red-600">₹82,150</h3>
-           <div className="flex items-center space-x-2 text-[#888888]">
-              <Clock size={14} />
-              <span className="text-[10px] font-black uppercase tracking-widest">Check Overdues</span>
-           </div>
-        </motion.div>
 
-        <motion.div whileHover={{ y: -5 }} className="bg-blue-600 p-8 rounded-[2.5rem] text-white relative overflow-hidden group shadow-2xl shadow-blue-500/20">
-           <div className="absolute -right-4 -top-4 w-24 h-24 bg-black/10 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
-           <p className="text-[10px] font-black text-blue-100 uppercase tracking-widest mb-1">Active Scholarship</p>
-           <h3 className="text-3xl font-black mb-4 tracking-tighter">₹15,000</h3>
-           <div className="flex items-center space-x-2 text-blue-100">
-              <CheckCircle size={14} />
-              <span className="text-[10px] font-black uppercase tracking-widest">4 Qualified</span>
-           </div>
-        </motion.div>
-      </div>
 
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="relative flex-1 group">

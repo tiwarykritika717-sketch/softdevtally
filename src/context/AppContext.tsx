@@ -83,6 +83,7 @@ interface AppContextType extends AppState {
   login: (email: string, role: UserRole) => void;
   logout: () => void;
   clearData: () => void;
+  clearTransactionHistory: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -2056,6 +2057,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const clearTransactionHistory = async () => {
+    try {
+      // 1. Clear database tables
+      await supabaseAdmin.from('fee_payments').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabaseAdmin.from('business_transactions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabaseAdmin.from('wallet_transactions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
+      // 2. Clear local states
+      setFeePayments([]);
+      setBusinessTransactions([]);
+      setWalletTransactions([]);
+
+      // 3. Reset students' parameters in local state and database
+      setStudents(prev => (prev || []).map(s => ({
+        ...s,
+        paidAmount: 0,
+        feeStatus: 'Pending'
+      })));
+
+      try {
+        await supabaseAdmin.from('students').update({
+          paid_amount: 0,
+          fee_status: 'Pending'
+        }).neq('id', 'none');
+      } catch (err) {
+        console.error('Failed to reset students totals in database:', err);
+      }
+    } catch (err) {
+      console.error('Failed to clear transaction history:', err);
+      throw err;
+    }
+  };
+
   return (
     <AppContext.Provider value={{
       currentUser, franchises, students, certificates, walletTransactions, businessTransactions, courses, feeStructures, feePayments, franchiseFees, enquiries, businessProfile, sessions, announcements, vouchers, exams, subjects, courseCategories, programs, globalCourseSettings, isLoading,
@@ -2070,7 +2104,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addSubject, updateSubject, deleteSubject,
       addFeeStructure, updateFeeStructure, deleteFeeStructure, addFeePayment,
       addEnquiry, updateEnquiry, deleteEnquiry,
-      addFranchiseFee, updateFranchiseFee, deleteFranchiseFee, updateBusinessProfile, login, logout, clearData
+      addFranchiseFee, updateFranchiseFee, deleteFranchiseFee, updateBusinessProfile, login, logout, clearData, clearTransactionHistory
     }}>
       {children}
     </AppContext.Provider>

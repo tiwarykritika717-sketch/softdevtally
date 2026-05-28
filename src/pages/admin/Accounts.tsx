@@ -26,7 +26,8 @@ import {
   X,
   CheckCircle,
   Coins,
-  Check
+  Check,
+  Trash2
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { clsx } from 'clsx';
@@ -45,7 +46,7 @@ import {
 import { AnimatePresence } from 'motion/react';
 
 export const Accounts = () => {
-  const { businessTransactions, feePayments, students, franchises, addBusinessTransaction, updateBusinessTransaction, deleteBusinessTransaction, currentUser, vouchers, verifyVoucher, addVoucher, deleteVoucher, updateVoucher, businessProfile } = useApp();
+  const { businessTransactions, feePayments, students, franchises, addBusinessTransaction, updateBusinessTransaction, deleteBusinessTransaction, currentUser, vouchers, verifyVoucher, addVoucher, deleteVoucher, updateVoucher, businessProfile, clearTransactionHistory } = useApp();
   const isFranchise = currentUser?.role === 'FRANCHISE';
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'ADMINISTRATOR';
   const myFranchiseId = currentUser?.franchiseId;
@@ -333,6 +334,24 @@ export const Accounts = () => {
             <Download size={14} />
             <span>Export CSV</span>
           </button>
+          {isAdmin && (
+            <button 
+              onClick={async () => {
+                if (window.confirm('CRITICAL WARNING: This will permanently delete ALL transaction history (including fee payments, business ledger transactions, and wallet operations) and reset student paid amounts to zero. This action is irreversible. Do you want to continue?')) {
+                  try {
+                    await clearTransactionHistory();
+                    alert('Transaction history cleared successfully.');
+                  } catch (err) {
+                    alert('An error occurred while clearing history.');
+                  }
+                }
+              }}
+              className="flex items-center space-x-2 px-6 py-3 bg-red-50 hover:bg-red-100 border border-red-200 rounded-2xl text-[10px] font-black uppercase tracking-widest text-red-600 shadow-sm transition-all"
+            >
+              <Trash2 size={14} />
+              <span>Clear History</span>
+            </button>
+          )}
         </div>
       </div>
 
