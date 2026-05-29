@@ -1110,7 +1110,16 @@ export const Accounts = () => {
             background: white !important;
             color: black !important;
           }
+          body * {
+            visibility: hidden;
+          }
+          #printable-accounts-receipt, #printable-accounts-receipt * {
+            visibility: visible !important;
+          }
           #printable-accounts-receipt {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
             background: white !important;
             border: 0 !important;
             padding: 0 !important;

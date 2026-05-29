@@ -321,9 +321,11 @@ export const FeeCollection = () => {
               margin: 5mm;
             }
             body {
-              visibility: hidden !important;
               background: white !important;
               color: black !important;
+            }
+            body * {
+              visibility: hidden;
             }
             #printable-receipt, #printable-receipt * {
                visibility: visible !important;
