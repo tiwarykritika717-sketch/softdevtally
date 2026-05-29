@@ -54,10 +54,26 @@ export const FeeMaster = () => {
   const sessions = ['All', ...Array.from(new Set(feeStructures.map(f => f.session)))];
   const types = ['All', ...Array.from(new Set(feeStructures.map(f => f.type)))];
 
-  const handleOpenModal = (fee?: FeeStructure) => {
+  const handleOpenModal = (fee?: FeeStructure | any) => {
     if (fee) {
-      setEditingFee(fee);
-      setFormData(fee);
+      if (fee.id && fee.id.startsWith('placeholder-')) {
+        setEditingFee(null);
+        setFormData({
+          head: 'Course Fee',
+          courseId: fee.courseId,
+          courseName: fee.courseName,
+          frequency: 'One-time',
+          amount: 0,
+          discount: 0,
+          latePenalty: 0,
+          session: fee.session || '2026-27',
+          type: 'Academic',
+          status: 'ACTIVE'
+        });
+      } else {
+        setEditingFee(fee);
+        setFormData(fee);
+      }
     } else {
       setEditingFee(null);
       setFormData({
@@ -103,10 +119,42 @@ export const FeeMaster = () => {
     const matchesSession = sessionFilter === 'All' || f.session === sessionFilter;
     const matchesCategory = categoryFilter === 'All' || 
                            (f.courseId === 'all') ||
-                           (course && course.category === categoryFilter);
+                           (course && course.category.trim() === categoryFilter.trim());
     
     return matchesSearch && matchesType && matchesSession && matchesCategory;
   });
+
+  // Get all real courses (excluding system stubs)
+  const realCourses = courses.filter(c => c.category !== 'SYSTEM_STUB');
+
+  // Find any real course that is NOT configured in any fee structure, and add placeholders for them
+  const extraRows: any[] = [];
+  realCourses.forEach(course => {
+    const hasStructure = feeStructures.some(f => f.courseId === course.id);
+    if (!hasStructure) {
+      const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = categoryFilter === 'All' || course.category.trim() === categoryFilter.trim();
+      
+      if (matchesSearch && matchesCategory) {
+        extraRows.push({
+          id: `placeholder-${course.id}`,
+          head: 'Not Configured',
+          courseId: course.id,
+          courseName: course.title,
+          frequency: '--',
+          amount: 0,
+          discount: 0,
+          latePenalty: 0,
+          session: sessionFilter === 'All' ? '2026-27' : sessionFilter,
+          type: 'Academic',
+          status: 'INACTIVE',
+          isPlaceholder: true
+        });
+      }
+    }
+  });
+
+  const displayList = [...filtered, ...extraRows];
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto pb-20">
@@ -177,7 +225,7 @@ export const FeeMaster = () => {
       <div className="bg-white rounded-[2.5rem] border border-[#F0F0F0] shadow-xl overflow-hidden">
         <div className="p-8 border-b border-[#F5F5F5] flex items-center justify-between">
            <h3 className="text-xs font-black text-[#141414] uppercase tracking-widest">Configured Fee Structures</h3>
-           <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-tighter">{filtered.length} Results</span>
+           <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-tighter">{displayList.length} Results</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
@@ -194,52 +242,87 @@ export const FeeMaster = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F5F5F5]">
-              {filtered.map((fee) => (
-                <tr key={fee.id} className="hover:bg-blue-50/20 transition-colors group">
+              {displayList.map((fee) => (
+                <tr key={fee.id} className={clsx(
+                  "hover:bg-blue-50/20 transition-colors group",
+                  fee.isPlaceholder && "bg-amber-50/5"
+                )}>
                   <td className="px-8 py-6">
                     <div className="flex items-center space-x-4">
-                       <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 group-hover:bg-white transition-all shadow-inner"><CreditCard size={18} /></div>
+                       <div className={clsx(
+                         "w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-inner",
+                         fee.isPlaceholder ? "bg-amber-50 text-amber-500" : "bg-gray-50 text-gray-400 group-hover:bg-white"
+                       )}>
+                         <CreditCard size={18} />
+                       </div>
                        <div className="flex flex-col">
-                          <span className="text-xs font-black text-[#141414] uppercase tracking-tight">{fee.head}</span>
+                          <span className={clsx(
+                            "text-xs font-black uppercase tracking-tight",
+                            fee.isPlaceholder ? "text-amber-600" : "text-[#141414]"
+                          )}>{fee.head}</span>
                           <span className="text-[8px] font-black text-[#888888] uppercase tracking-widest">{fee.frequency}</span>
                        </div>
                     </div>
                   </td>
                   <td className="px-8 py-6">
-                    <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                    <span className={clsx(
+                      "text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter",
+                      fee.isPlaceholder ? "text-amber-600 bg-amber-50" : "text-emerald-600 bg-emerald-50"
+                    )}>
                       {courses.find(c => c.id === fee.courseId || c.title === fee.courseName)?.category || 'General'}
                     </span>
                   </td>
-                  <td className="px-8 py-6 font-bold text-[10px] text-blue-600 uppercase tracking-tight">{fee.courseName}</td>
-                  <td className="px-8 py-6 text-xs font-black text-[#141414]">₹{fee.amount.toLocaleString()}</td>
+                  <td className={clsx(
+                    "px-8 py-6 font-bold text-[10px] uppercase tracking-tight",
+                    fee.isPlaceholder ? "text-gray-500" : "text-blue-600"
+                  )}>{fee.courseName}</td>
+                  <td className={clsx(
+                    "px-8 py-6 text-xs font-black",
+                    fee.isPlaceholder ? "text-gray-400" : "text-[#141414]"
+                  )}>{fee.isPlaceholder ? '--' : `₹${fee.amount.toLocaleString()}`}</td>
                   <td className="px-8 py-6 text-[10px] font-black text-emerald-600">
-                    {fee.discount > 0 ? `- ₹${fee.discount.toLocaleString()}` : '--'}
+                    {fee.isPlaceholder ? '--' : (fee.discount > 0 ? `- ₹${fee.discount.toLocaleString()}` : '--')}
                   </td>
-                  <td className="px-8 py-6 text-[10px] font-black text-red-500">₹{fee.latePenalty.toLocaleString()} / Day</td>
+                  <td className={clsx(
+                    "px-8 py-6 text-[10px] font-black",
+                    fee.isPlaceholder ? "text-gray-400" : "text-red-500"
+                  )}>{fee.isPlaceholder ? '--' : `₹${fee.latePenalty.toLocaleString()} / Day`}</td>
                   <td className="px-8 py-6">
-                    <span className="px-3 py-1 bg-gray-50 text-[8px] font-black uppercase tracking-widest rounded-full">{fee.type}</span>
+                    <span className="px-3 py-1 bg-gray-50 text-[8px] font-black uppercase tracking-widest rounded-full text-gray-400">{fee.type}</span>
                   </td>
                   <td className="px-8 py-6">
                     <div className="flex items-center justify-center space-x-2">
-                       <button 
-                         onClick={() => handleOpenModal(fee)}
-                         className="p-2 text-gray-400 hover:text-blue-600 hover:bg-white rounded-lg transition-all"
-                       >
-                         <Edit2 size={16} />
-                       </button>
-                       <button 
-                         onClick={() => deleteFeeStructure(fee.id)}
-                         className="p-2 text-gray-400 hover:text-red-500 hover:bg-white rounded-lg transition-all"
-                       >
-                         <Trash2 size={16} />
-                       </button>
+                       {fee.isPlaceholder ? (
+                         <button 
+                           onClick={() => handleOpenModal(fee)}
+                           className="px-3 py-1.5 bg-blue-50 text-blue-600 text-[8px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-600 hover:text-white transition-all flex items-center space-x-1"
+                         >
+                           <Plus size={10} />
+                           <span>Configure Fee</span>
+                         </button>
+                       ) : (
+                         <>
+                           <button 
+                             onClick={() => handleOpenModal(fee)}
+                             className="p-2 text-gray-400 hover:text-blue-600 hover:bg-white rounded-lg transition-all"
+                           >
+                             <Edit2 size={16} />
+                           </button>
+                           <button 
+                             onClick={() => deleteFeeStructure(fee.id)}
+                             className="p-2 text-gray-400 hover:text-red-500 hover:bg-white rounded-lg transition-all"
+                           >
+                             <Trash2 size={16} />
+                           </button>
+                         </>
+                       )}
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {filtered.length === 0 && (
+          {displayList.length === 0 && (
              <div className="p-20 text-center space-y-4">
                 <Search size={40} className="mx-auto text-gray-200" />
                 <p className="text-sm font-black text-gray-400 uppercase tracking-widest">No matching fee structures found</p>
