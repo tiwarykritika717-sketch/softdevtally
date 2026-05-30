@@ -261,6 +261,43 @@ export const CollaborationCertificate: React.FC<CollaborationCertificateProps> =
         </div>
 
       </div>
+
+      <style>{`
+        @media print {
+          @page {
+            size: A4 landscape;
+            margin: 0;
+          }
+          body {
+            background: white !important;
+            color: black !important;
+          }
+          body * {
+            visibility: hidden;
+          }
+          #collaboration-certificate, #collaboration-certificate * {
+            visibility: visible !important;
+          }
+          #collaboration-certificate {
+            position: absolute !important;
+            left: 50% !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            background: #FCFAF6 !important;
+            border: 6px solid rgba(245, 158, 11, 0.8) !important;
+            padding: 8px !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            width: 297mm !important;
+            height: 210mm !important;
+            box-sizing: border-box !important;
+          }
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };

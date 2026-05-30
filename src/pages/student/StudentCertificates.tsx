@@ -269,7 +269,7 @@ export const StudentCertificates = () => {
 
             {/* Certificate Box (Print Only / Screen Preview matching the physical layout exactly) */}
             <div className="overflow-x-auto py-2">
-              <div className="print-only min-w-[850px] mx-auto border-[4px] border-amber-500/70 p-2 bg-white aspect-[1.414/1] relative flex flex-col justify-between shadow-2xl print:shadow-none print:border-[4px] print:border-amber-500/70 leading-normal select-none overflow-hidden">
+              <div id="printable-student-certificate" className="print-only min-w-[850px] mx-auto border-[4px] border-amber-500/70 p-2 bg-white aspect-[1.414/1] relative flex flex-col justify-between shadow-2xl print:shadow-none print:border-[4px] print:border-amber-500/70 leading-normal select-none overflow-hidden">
                 {/* Outer navy border inset */}
                 <div className="absolute inset-2 border-[12px] border-[#112D55] pointer-events-none rounded-sm"></div>
                 {/* Thin gold hairline inside border list */}
@@ -461,6 +461,43 @@ export const StudentCertificates = () => {
           </div>
         </div>
       )}
+
+      <style>{`
+        @media print {
+          @page {
+            size: A4 landscape;
+            margin: 0;
+          }
+          body {
+            background: white !important;
+            color: black !important;
+          }
+          body * {
+            visibility: hidden;
+          }
+          #printable-student-certificate, #printable-student-certificate * {
+            visibility: visible !important;
+          }
+          #printable-student-certificate {
+            position: absolute !important;
+            left: 50% !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            background: white !important;
+            border: 4px solid rgba(245, 158, 11, 0.7) !important;
+            padding: 8px !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            width: 297mm !important;
+            height: 210mm !important;
+            box-sizing: border-box !important;
+          }
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };

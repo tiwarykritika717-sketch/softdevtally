@@ -1113,6 +1113,41 @@ export const StudentRegistration = () => {
           </div>
         )}
       </AnimatePresence>
+      
+      <style>{`
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 10mm;
+          }
+          body {
+            background: white !important;
+            color: black !important;
+          }
+          body * {
+            visibility: hidden;
+          }
+          #printable-form, #printable-form * {
+            visibility: visible !important;
+          }
+          #printable-form {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            background: white !important;
+            border: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+        }
+      `}</style>
     </>
   );
 };
