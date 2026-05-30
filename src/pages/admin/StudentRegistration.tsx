@@ -943,7 +943,7 @@ export const StudentRegistration = () => {
 
       <AnimatePresence>
         {showPrintModal && lastStudent && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:p-0 print:bg-white">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:p-0 print:bg-white print:static print:overflow-visible">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -968,7 +968,7 @@ export const StudentRegistration = () => {
               </div>
 
               {/* Printable Content */}
-              <div id="printable-form" className="font-sans text-[#141414] relative overflow-hidden">
+              <div id="printable-form" className="print-only font-sans text-[#141414] relative overflow-hidden">
                 {/* Watermark */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05] select-none z-0">
                   <div className="flex flex-col items-center rotate-[-35deg] scale-150">

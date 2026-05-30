@@ -1683,7 +1683,11 @@ export const FeeCollection = () => {
                                    const student = students.find(s => s.id === showReceipt.studentId);
                                    if (!student) return null;
                                    
-                                   const studentPayments = clubbedFeePayments.filter(p => p.studentId === student.id);
+                                   const allStudentPayments = clubbedFeePayments.filter(p => p.studentId === student.id);
+                                   const currentPaymentIdx = allStudentPayments.findIndex(p => p.id === showReceipt.id);
+                                   const studentPayments = (receiptType === 'SINGLE' && currentPaymentIdx !== -1)
+                                     ? allStudentPayments.slice(0, currentPaymentIdx + 1)
+                                     : allStudentPayments;
                                    // Computing dynamic summary below
                                    
                                    const getNormalizeKey = (type: string) => {

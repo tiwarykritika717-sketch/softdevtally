@@ -648,7 +648,7 @@ export const StudentDirectory = () => {
 
       <AnimatePresence>
         {showPrintModal && studentToPrint && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:p-0 print:bg-white text-left">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:p-0 print:bg-white text-left print:static print:overflow-visible">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -671,7 +671,7 @@ export const StudentDirectory = () => {
                 </button>
               </div>
 
-              <div id="printable-form" className="font-sans text-[#141414]">
+              <div id="printable-form" className="print-only font-sans text-[#141414]">
                   {/* Header Section Matches Image */}
                   <div className="text-center space-y-1 mb-8">
                      {businessProfile.receiptHeaderUrl ? (
