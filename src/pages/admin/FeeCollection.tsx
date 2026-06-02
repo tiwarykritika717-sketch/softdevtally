@@ -1630,12 +1630,6 @@ export const FeeCollection = () => {
                                  <div className="grid grid-cols-2 divide-x-2 divide-black h-10">
                                    <div className="px-4 flex items-center font-black bg-blue-50 text-[10px]">Total Course Fee</div>
                                    <div className="px-4 flex items-center font-bold uppercase text-[10px]">₹{student.totalFees || '--'}</div>
-                                  </div>
-                                  <div className="grid grid-cols-2 divide-x-2 divide-black h-10">
-                                    <div className="px-4 flex items-center font-black bg-blue-50 text-blue-600 text-[10px]">INSTALLMENT</div>
-                                    <div className="px-4 flex items-center font-black uppercase text-blue-600 text-[10px]">
-                                      {getInstallmentNumber(showReceipt.id, showReceipt.studentId)}
-                                    </div>
                                  </div>
                                </div>
                              </div>
