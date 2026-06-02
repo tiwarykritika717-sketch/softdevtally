@@ -28,7 +28,8 @@ import {
   RefreshCw,
   MoreVertical,
   Target,
-  X
+  X,
+  CreditCard
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { clsx } from 'clsx';
@@ -225,10 +226,17 @@ export const FranchiseDashboard = () => {
            </div>
            <button 
              onClick={() => navigate('/franchise/registration')}
-             className="px-6 py-3 bg-[#141414] text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-blue-600 transition-all flex items-center space-x-2"
+             className="px-6 py-3 bg-[#141414] text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-blue-600 transition-all flex items-center space-x-2 shadow-lg shadow-black/10"
            >
               <Plus size={16} />
               <span>New Entry</span>
+           </button>
+           <button 
+             onClick={() => navigate('/franchise/collection')}
+             className="px-6 py-3 bg-emerald-600 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-600/10 transition-all flex items-center space-x-2"
+           >
+              <CreditCard size={16} />
+              <span>Collect Fee</span>
            </button>
         </div>
       </div>

@@ -118,7 +118,7 @@ export const FeeCollection = () => {
           dueDate: dueDate,
           penaltyRate: penaltyRate
         }],
-        paymentModes: [{ mode: 'Cash', amount: finalPaid, transactionId: '' }],
+        paymentModes: [{ mode: 'Cash', amount: 0, transactionId: '' }],
         remarks: ''
       });
     }
@@ -548,23 +548,7 @@ export const FeeCollection = () => {
                      <Plus size={16} />
                      <span>Post New Payment</span>
                    </button>
-                    <button 
-                      onClick={() => {
-                        const studentPayments = clubbedFeePayments.filter(p => p.studentId === selectedStudent.id);
-                        if (studentPayments.length > 0) {
-                          setReceiptType('HISTORY');
-                          setShowReceipt(studentPayments[studentPayments.length - 1]);
-                        } else {
-                          alert('No payment records found for this student.');
-                        }
-                      }}
-                      className="w-full py-4 bg-white text-[#141414] rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-50 transition-all flex items-center justify-center space-x-2 border-2 border-[#141414] shadow-sm font-black"
-                    >
-                      <Printer size={16} />
-                      <span>Print Course Fee Summary</span>
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-2 pt-2">
                      <button 
                        onClick={() => sendWhatsAppReminder(selectedStudent, 'DUE')}
                        className="py-3 bg-emerald-600 text-white rounded-2xl text-[8px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all flex items-center justify-center space-x-2"
@@ -581,7 +565,8 @@ export const FeeCollection = () => {
                      </button>
                    </div>
                  </div>
-               </motion.div>
+               </div>
+             </motion.div>
              ) : (
                <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-[2.5rem] h-full min-h-[300px] flex flex-col items-center justify-center p-8 text-center text-gray-400">
                  <User size={32} className="mb-2" />
@@ -1363,8 +1348,8 @@ export const FeeCollection = () => {
                           </select>
                         </div>
                         <div className="space-y-1">
-                          <div className="flex items-center justify-between">
-                            <label className="text-[8px] font-black text-[#888888] uppercase tracking-widest">Paid (₹)</label>
+                          <div className="flex items-center justify-between gap-1 overflow-hidden">
+                            <label className="text-[8px] font-black text-[#888888] uppercase tracking-widest whitespace-nowrap flex-shrink-0">Paid (₹)</label>
                             {idx === 0 && (
                                <button 
                                   type="button" 
@@ -1373,7 +1358,7 @@ export const FeeCollection = () => {
                                      newModes[0].amount = totalPayable;
                                      setPaymentData({ ...paymentData, paymentModes: newModes });
                                   }}
-                                  className="text-[7px] font-black text-emerald-600 uppercase hover:underline"
+                                  className="text-[7px] font-black text-emerald-600 uppercase hover:underline whitespace-nowrap flex-shrink-0"
                                >Set Remaining</button>
                             )}
                           </div>
